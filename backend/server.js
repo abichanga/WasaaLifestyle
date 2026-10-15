@@ -12,6 +12,8 @@ app.use(express.json());      //let the server read JSON request bodies
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/categories", require("./routes/categories"));
 app.use("/api/providers", require("./routes/providers"));
+app.use("/api/bookings", require("./routes/bookings"));
+app.use("/api/reviews", require("./routes/reviews"));
 
 //a simple test route so we can confirm the server runs
 app.get("/", (req, res) => {

@@ -11,7 +11,7 @@ const Provider = require("./models/Provider");
 const ServiceCategory = require("./models/ServiceCategory");
 
 const SAMPLE_SIZE = 50;
-const CATEGORIES = ["Plumbing", "Cleaning", "Electrical"];
+const CATEGORIES = ["Plumbing", "Electrical", "Carpentry", "Appliance Repair"];
 
 //generate a simple fake name/email for each provider 
 const FIRST = ["John","Mary","Peter","Grace","David","Faith","James","Ann","Paul","Ruth","Samuel","Joyce"];
