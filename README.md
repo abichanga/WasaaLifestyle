@@ -36,7 +36,7 @@ The model beat the baseline on all 8 independently generated datasets. In a mani
 
 ## Project Structure
 
-\`\`\`
+```
 WasaaLifestyle/
 ├── model/            # ML: dataset generation, calibration, evaluation
 │   ├── generate_dataset.py     # simulate providers with known reliability
@@ -52,7 +52,7 @@ WasaaLifestyle/
 │   └── seed.js           # loads sample providers from the research data
 ├── web/              # React web app (planned)
 └── mobile/           # React Native app (planned)
-\`\`\`
+```
 
 ## How the Model Works
 
