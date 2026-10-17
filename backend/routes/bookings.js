@@ -27,7 +27,7 @@ router.post("/", protect, restrictTo("household"), async (req, res) => {
   }
 });
 
-//GET my bookings (works for both households and providers) 
+//GET my bookings 
 router.get("/mine", protect, async (req, res) => {
   try {
     let bookings;
@@ -45,7 +45,7 @@ router.get("/mine", protect, async (req, res) => {
   }
 });
 
-//UPDATE booking status (provider confirms/completes/rejects) 
+//UPDATE booking status 
 router.patch("/:id/status", protect, restrictTo("provider"), async (req, res) => {
   try {
     const { status } = req.body;
@@ -68,7 +68,6 @@ router.patch("/:id/status", protect, restrictTo("provider"), async (req, res) =>
     booking.status = status;
     await booking.save();
 
-    //a newly completed job updates the provider's track record
     if (status === "completed" && previousStatus !== "completed") {
       await updateProviderSignals(provider._id);
     }
@@ -79,16 +78,13 @@ router.patch("/:id/status", protect, restrictTo("provider"), async (req, res) =>
   }
 });
 
-async function updateProviderRating(providerId) {
+//A newly completed job adds to the provider's track record, on top of their baseline.
+async function updateProviderSignals(providerId) {
   const provider = await Provider.findById(providerId);
-  if (!provider) return;   // provider no longer exists, skip the update
 
-  const reviews = await Review.find({ providerId });
-  if (reviews.length > 0) {
-    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
-    provider.avgRating = sum / reviews.length;
-    provider.reviewCount = reviews.length;
-  }
+  provider.confirmedJobCount = (provider.confirmedJobCount || 0) + 1;
+  provider.completionRate = provider.completionRate + (1 - provider.completionRate) * 0.05;
+  provider.completionRate = Math.min(provider.completionRate, 1);
 
   const { computeTrustScore } = require("../services/trustScore");
   const result = computeTrustScore(provider);

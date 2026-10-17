@@ -10,6 +10,15 @@ const providerSchema = new mongoose.Schema({
   credentialStatus: { type: String, enum: ["none", "association", "rpl", "both"], default: "none" },
   verificationTier: { type: String, enum: ["provisional", "verified", "trusted"], default: "provisional" },
 
+    // verification submission
+  identityDocument: { type: String },      // file path to uploaded ID
+  credentialDocument: { type: String },    // file path to uploaded credential
+  verificationStatus: {
+    type: String,
+    enum: ["unverified", "pending", "approved", "rejected"],
+    default: "unverified",
+  },
+
   // trust signals
   completionRate: { type: Number, default: 0 },
   complaintRate: { type: Number, default: 0 },

@@ -14,6 +14,8 @@ app.use("/api/categories", require("./routes/categories"));
 app.use("/api/providers", require("./routes/providers"));
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/reviews", require("./routes/reviews"));
+app.use("/api/verification", require("./routes/verification"));
+app.use("/uploads", express.static("uploads"));
 
 //a simple test route so we can confirm the server runs
 app.get("/", (req, res) => {
