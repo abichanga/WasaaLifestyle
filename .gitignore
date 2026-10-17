@@ -1,15 +1,19 @@
-# dependencies
+#dependencies
 node_modules/
 **/node_modules/
 
-# secrets
+#secrets
 .env
 **/.env
 
-# python
+#python
 venv/
 __pycache__/
 *.pyc
 
-# os
+#os
 .DS_Store
+
+#uploads
+uploads/
+**/uploads/
