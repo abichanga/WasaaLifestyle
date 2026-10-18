@@ -65,7 +65,7 @@ router.get("/search", async (req, res) => {
   }
 });
 
-//GET - a single provider's full profile
+//GET - a single provider's full profile, with trust score breakdown
 router.get("/:id", async (req, res) => {
   try {
     const provider = await Provider.findById(req.params.id)
@@ -74,9 +74,29 @@ router.get("/:id", async (req, res) => {
     if (!provider) {
       return res.status(404).json({ message: "Provider not found" });
     }
-    res.json(provider);
+
+    //compute the live breakdown so the frontend can show what makes up the score
+    const { computeTrustScore } = require("../services/trustScore");
+    const scored = computeTrustScore(provider);
+
+    //return the provider plus the breakdown
+    res.json({ ...provider.toObject(), breakdown: scored.breakdown });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch provider", error: err.message });
+  }
+});
+//GET the logged-in provider's own profile 
+router.get("/me/profile", protect, restrictTo("provider"), async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ userId: req.user.userId })
+      .populate("userId", "fullName phone email")
+      .populate("serviceCategoryId", "name");
+    if (!provider) {
+      return res.status(404).json({ message: "Provider profile not found" });
+    }
+    res.json(provider);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch profile", error: err.message });
   }
 });
 
