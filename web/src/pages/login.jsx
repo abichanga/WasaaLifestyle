@@ -5,89 +5,106 @@ import api from "../api/client";
 function Login() {
   const [isRegister, setIsRegister] = useState(false);
   const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    password: "",
-    role: "household",
+    fullName: "", email: "", phone: "", password: "", role: "household",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
     try {
       if (isRegister) {
-        // register, then log in
         await api.post("/auth/register", form);
       }
-      // log in
       const res = await api.post("/auth/login", {
-        email: form.email,
-        password: form.password,
+        email: form.email, password: form.password,
       });
-      // save the token and user
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-  
-      // route by role
       const role = res.data.user.role;
-      navigate(role === "provider" ? "/my-jobs" : "/search");
+      if (role === "admin") navigate("/admin");
+      else if (role === "provider") navigate("/my-jobs");
+      else navigate("/search");
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "60px auto", fontFamily: "sans-serif" }}>
-      <h1>WasaaLifestyle</h1>
-      <h2>{isRegister ? "Create account" : "Sign in"}</h2>
+    <div className="auth">
+      {/* left: branded panel with floating trust-score cards */}
+      <div className="auth-panel">
+        <div className="float-cards">
+          <div className="float-card fc1"><div className="fc-score">96</div><div className="fc-label">trust score</div></div>
+          <div className="float-card fc2"><div className="fc-score">88</div><div className="fc-label">trust score</div></div>
+          <div className="float-card fc3"><div className="fc-score">79</div><div className="fc-label">trust score</div></div>
+        </div>
+        <h2 className="panel-head">Trust, before you even meet them.</h2>
+        <p className="panel-sub">
+          Find verified household service providers in Nairobi, ranked by a trust score built from real job history.
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        {isRegister && (
-          <>
-            <input name="fullName" placeholder="Full name" value={form.fullName}
-              onChange={handleChange} required
-              style={{ display: "block", width: "100%", marginBottom: 8, padding: 8 }} />
-            <input name="phone" placeholder="Phone" value={form.phone}
-              onChange={handleChange} required
-              style={{ display: "block", width: "100%", marginBottom: 8, padding: 8 }} />
-          </>
-        )}
-        <input name="email" type="email" placeholder="Email" value={form.email}
-          onChange={handleChange} required
-          style={{ display: "block", width: "100%", marginBottom: 8, padding: 8 }} />
-        <input name="password" type="password" placeholder="Password" value={form.password}
-          onChange={handleChange} required
-          style={{ display: "block", width: "100%", marginBottom: 8, padding: 8 }} />
+      {/* right: the form */}
+      <div className="auth-form-side">
+        <div className="auth-form">
+          <div className="auth-logo">
+            <span className="brand-mark">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2.5l7 3v5c0 4.3-2.8 7.6-7 9-4.2-1.4-7-4.7-7-9v-5l7-3z" fill="#fff" fillOpacity="0.18" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round"/>
+                <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+            <span className="brand-text">Wasaa<span className="life">Lifestyle</span></span>
+          </div>
 
-        {isRegister && (
-          <select name="role" value={form.role} onChange={handleChange}
-            style={{ display: "block", width: "100%", marginBottom: 8, padding: 8 }}>
-            <option value="household">Household</option>
-            <option value="provider">Provider</option>
-          </select>
-        )}
+          <h1 className="auth-title">{isRegister ? "Create your account" : "Welcome back"}</h1>
+          <p className="auth-sub">{isRegister ? "Join to find trusted help." : "Sign in to continue."}</p>
 
-        <button type="submit" style={{ width: "100%", padding: 10, marginTop: 8 }}>
-          {isRegister ? "Register" : "Sign in"}
-        </button>
-      </form>
+          <form onSubmit={handleSubmit}>
+            {isRegister && (
+              <>
+                <input className="input" name="fullName" placeholder="Full name"
+                  value={form.fullName} onChange={handleChange} required />
+                <input className="input" name="phone" placeholder="Phone number"
+                  value={form.phone} onChange={handleChange} required />
+              </>
+            )}
+            <input className="input" name="email" type="email" placeholder="Email address"
+              value={form.email} onChange={handleChange} required />
+            <input className="input" name="password" type="password" placeholder="Password"
+              value={form.password} onChange={handleChange} required />
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+            {isRegister && (
+              <select className="select" name="role" value={form.role} onChange={handleChange}>
+                <option value="household">I need a service (Household)</option>
+                <option value="provider">I provide a service (Provider)</option>
+              </select>
+            )}
 
-      <p style={{ marginTop: 16 }}>
-        {isRegister ? "Already have an account?" : "No account?"}{" "}
-        <button onClick={() => setIsRegister(!isRegister)}
-          style={{ border: "none", background: "none", color: "blue", cursor: "pointer" }}>
-          {isRegister ? "Sign in" : "Register"}
-        </button>
-      </p>
+            <button className="btn btn-primary" type="submit" style={{ width: "100%", marginTop: 4 }} disabled={loading}>
+              {loading ? "Please wait..." : isRegister ? "Create account" : "Sign in"}
+            </button>
+          </form>
+
+          {error && <p className="error-msg">{error}</p>}
+
+          <p className="muted" style={{ marginTop: 18, textAlign: "center" }}>
+            {isRegister ? "Already have an account? " : "No account yet? "}
+            <button onClick={() => setIsRegister(!isRegister)}
+              style={{ border: "none", background: "none", color: "var(--teal)", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>
+              {isRegister ? "Sign in" : "Register"}
+            </button>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,19 +2,31 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 
+function Brand() {
+  return (
+    <div className="brand-lockup">
+      <span className="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2.5l7 3v5c0 4.3-2.8 7.6-7 9-4.2-1.4-7-4.7-7-9v-5l7-3z" fill="#fff" fillOpacity="0.18" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round"/>
+          <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </span>
+      <span className="brand-text">Wasaa<span className="life">Lifestyle</span></span>
+    </div>
+  );
+}
+
 function Search() {
   const [categories, setCategories] = useState([]);
-  const [selected, setSelected] = useState("");   // selected category id ("" = all)
+  const [selected, setSelected] = useState("");
   const [providers, setProviders] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // load the list of categories once, for the dropdown
   useEffect(() => {
     api.get("/categories").then((res) => setCategories(res.data)).catch(() => {});
   }, []);
 
-  // fetch providers (optionally filtered by category)
   const runSearch = (categoryId) => {
     setLoading(true);
     const url = categoryId ? `/providers/search?category=${categoryId}` : "/providers/search";
@@ -24,71 +36,69 @@ function Search() {
       .finally(() => setLoading(false));
   };
 
-  // load all providers on first open
   useEffect(() => { runSearch(""); }, []);
 
   const handleCategoryChange = (e) => {
-    const id = e.target.value;
-    setSelected(id);
-    runSearch(id);
+    setSelected(e.target.value);
+    runSearch(e.target.value);
   };
 
-  const logout = () => {
-    localStorage.clear();
-    navigate("/login");
-  };
+  const logout = () => { localStorage.clear(); navigate("/login"); };
 
   return (
-    <div style={{ maxWidth: 700, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>Find a trusted provider</h1>
-        <button onClick={() => navigate("/my-bookings")} style={{ marginBottom: 12 }}>My Bookings</button>
-        <button onClick={logout}>Log out</button>
-      </div>
-
-      <div style={{ margin: "16px 0" }}>
-        <label style={{ marginRight: 8 }}>Service:</label>
-        <select value={selected} onChange={handleCategoryChange} style={{ padding: 8, minWidth: 200 }}>
-          <option value="">All services</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>{c.name}</option>
-          ))}
-        </select>
-      </div>
-
-      <p style={{ color: "#666" }}>Ranked by trust score</p>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : providers.length === 0 ? (
-        <p>No providers found for this service.</p>
-      ) : (
-        providers.map((p) => (
-          <div key={p.id}
-            onClick={() => navigate(`/provider/${p.id}`)}
-            style={{
-              border: "1px solid #ddd", borderRadius: 8, padding: 16,
-              marginBottom: 12, cursor: "pointer",
-            }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div>
-                <strong style={{ fontSize: 18 }}>{p.name}</strong>
-                <div style={{ color: "#666" }}>{p.category}</div>
-                <div style={{ fontSize: 13, marginTop: 4 }}>
-                  Tier: {p.verificationTier} · {p.reviewCount} reviews · ⭐ {p.avgRating}
-                </div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 28, fontWeight: "bold", color: "#2a9d8f" }}>
-                  {p.trustScore}
-                </div>
-                <div style={{ fontSize: 12, color: "#666" }}>trust score</div>
-              </div>
-            </div>
+    <>
+      <nav className="nav">
+        <div className="nav-inner">
+          <Brand />
+          <div className="nav-links">
+            <button onClick={() => navigate("/my-bookings")}>My bookings</button>
+            <button className="primary" onClick={logout}>Log out</button>
           </div>
-        ))
-      )}
-    </div>
+        </div>
+      </nav>
+
+      <div className="page">
+        <h1 className="page-title">Find a provider you can trust</h1>
+        <p className="lede">Every provider is ranked by a trust score built from real job history, not just star ratings.</p>
+
+        <div style={{ marginBottom: 26 }}>
+          <label className="label">Service</label>
+          <select className="select" value={selected} onChange={handleCategoryChange} style={{ maxWidth: 260 }}>
+            <option value="">All services</option>
+            {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+          </select>
+        </div>
+
+        {loading ? (
+          <div className="loading">Loading providers...</div>
+        ) : providers.length === 0 ? (
+          <div className="empty">No providers found for this service.</div>
+        ) : (
+          <>
+            <p className="muted" style={{ marginBottom: 14 }}>
+              {providers.length} provider{providers.length !== 1 ? "s" : ""}, ranked by trust score
+            </p>
+            {providers.map((p, i) => (
+              <div key={p.id} className="card clickable provider-card" onClick={() => navigate(`/provider/${p.id}`)}>
+                <div className="rank">{i + 1}</div>
+                <div className="pc-main">
+                  <p className="pc-name">{p.name}</p>
+                  <p className="pc-cat">{p.category}</p>
+                  <div className="meta">
+                    <span className={`badge ${p.verificationTier}`}>{p.verificationTier}</span>
+                    <span className="sub">★ {p.avgRating} · {p.reviewCount} reviews</span>
+                  </div>
+                </div>
+                <div className="score-box">
+                  <div className="score-num">{p.trustScore}</div>
+                  <div className="score-cap">trust score</div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </>
   );
 }
 

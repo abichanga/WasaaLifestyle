@@ -7,6 +7,7 @@ function Provider() {
   const [provider, setProvider] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [message, setMessage] = useState("");
+  const [booking, setBooking] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,79 +17,82 @@ function Provider() {
 
   const book = async () => {
     setMessage("");
+    setBooking(true);
     try {
       await api.post("/bookings", { providerId: id });
-      setMessage("Booking requested! The provider will confirm.");
+      setMessage("Booking requested. The provider will confirm shortly.");
     } catch (err) {
       setMessage(err.response?.data?.message || "Booking failed");
+    } finally {
+      setBooking(false);
     }
   };
 
-  if (!provider) return <p style={{ padding: 40 }}>Loading...</p>;
+  if (!provider) return <div className="loading">Loading...</div>;
 
   const ts = provider.trustScore?.value ?? 0;
+  const bd = provider.breakdown || {};
+  const signals = [
+    { label: "Job completion", value: bd.completion || 0 },
+    { label: "Low complaints", value: bd.lowComplaints || 0 },
+    { label: "Customer rating", value: bd.rating || 0 },
+    { label: "Verification", value: bd.verification || 0 },
+  ];
+  const maxPts = Math.max(...signals.map((s) => s.value), 1);
 
   return (
-    <div style={{ maxWidth: 600, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <button onClick={() => navigate("/search")}>&larr; Back to search</button>
+    <div className="page" style={{ maxWidth: 680 }}>
+      <button className="btn btn-ghost" style={{ marginBottom: 24, padding: "8px 16px" }}
+        onClick={() => navigate("/search")}>← Back to search</button>
 
-      <h1 style={{ marginBottom: 0 }}>{provider.userId?.fullName}</h1>
-      <p style={{ color: "#666" }}>{provider.serviceCategoryId?.name}</p>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "16px 0" }}>
-        <div style={{ fontSize: 42, fontWeight: "bold", color: "#2a9d8f" }}>{ts}</div>
-        <div>
-          <div>Trust score</div>
-          <div style={{ fontSize: 13, color: "#666" }}>
-            {provider.verificationTier} · ⭐ {provider.avgRating} · {provider.reviewCount} reviews
+      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        {/* header */}
+        <div style={{ padding: "28px 28px 24px", borderBottom: "1px solid var(--line)",
+          display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 26, margin: "0 0 6px" }}>
+              {provider.userId?.fullName}
+            </h1>
+            <div className="meta">
+              <span className={`badge ${provider.verificationTier}`}>{provider.verificationTier}</span>
+              <span className="sub">{provider.serviceCategoryId?.name} · ★ {provider.avgRating} · {provider.reviewCount} reviews</span>
+            </div>
           </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 50, fontWeight: 600, color: "var(--teal)", lineHeight: 1 }}>{ts}</div>
+            <div className="score-cap">trust score</div>
+          </div>
+        </div>
+
+        {/* breakdown */}
+        <div className="breakdown">
+          <h3>What makes up this score</h3>
+          {signals.map((s) => (
+            <div className="sig" key={s.label}>
+              <div className="sig-row"><span>{s.label}</span><span className="pts">{s.value} pts</span></div>
+              <div className="track"><div className="fill" style={{ width: `${(s.value / maxPts) * 100}%` }} /></div>
+            </div>
+          ))}
+          <p className="note">
+            Completion and complaint history carry the most weight, because they predict reliability better than star ratings alone.
+          </p>
+          {provider.bio && <p style={{ color: "var(--ink-soft)", marginBottom: 20 }}>{provider.bio}</p>}
+          <button className="btn btn-primary" onClick={book} disabled={booking}>
+            {booking ? "Requesting..." : "Book this provider"}
+          </button>
+          {message && <p className="success-msg">{message}</p>}
         </div>
       </div>
 
-            {provider.breakdown && (
-        <div style={{ background: "#f6f6f6", borderRadius: 8, padding: 16, margin: "16px 0" }}>
-          <strong style={{ display: "block", marginBottom: 8 }}>What makes up this score</strong>
-          {[
-            { label: "Job completion", value: provider.breakdown.completion },
-            { label: "Low complaints", value: provider.breakdown.lowComplaints },
-            { label: "Customer rating", value: provider.breakdown.rating },
-            { label: "Verification", value: provider.breakdown.verification },
-          ].map((row) => (
-            <div key={row.label} style={{ marginBottom: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span>{row.label}</span>
-                <span>{row.value} pts</span>
-              </div>
-              <div style={{ background: "#ddd", borderRadius: 4, height: 8, marginTop: 2 }}>
-                <div style={{
-                  background: "#2a9d8f", height: 8, borderRadius: 4,
-                  width: `${row.value}%`,
-                }} />
-              </div>
-            </div>
-          ))}
-          <p style={{ fontSize: 12, color: "#666", marginTop: 8 }}>
-            These four signals are combined into the trust score. Completion and complaints carry the most weight.
-          </p>
-        </div>
-      )}
-
-      <p>{provider.bio}</p>
-
-      <button onClick={book}
-        style={{ padding: "10px 20px", background: "#2a9d8f", color: "white", border: "none", borderRadius: 6, cursor: "pointer" }}>
-        Book this provider
-      </button>
-      {message && <p style={{ color: "#2a9d8f", marginTop: 12 }}>{message}</p>}
-
-      <h3 style={{ marginTop: 32 }}>Reviews</h3>
+      {/* reviews */}
+      <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 20, margin: "32px 0 14px" }}>Reviews</h3>
       {reviews.length === 0 ? (
-        <p style={{ color: "#666" }}>No reviews yet.</p>
+        <p className="muted">No reviews yet.</p>
       ) : (
         reviews.map((r) => (
-          <div key={r._id} style={{ borderTop: "1px solid #eee", padding: "8px 0" }}>
-            <strong>⭐ {r.rating}</strong>
-            <p style={{ margin: "4px 0", color: "#444" }}>{r.comment}</p>
+          <div className="card" key={r._id} style={{ padding: "16px 20px" }}>
+            <strong>★ {r.rating}</strong>
+            {r.comment && <p style={{ margin: "6px 0 0", color: "var(--ink-soft)" }}>{r.comment}</p>}
           </div>
         ))
       )}

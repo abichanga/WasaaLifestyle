@@ -2,6 +2,20 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 
+function Brand() {
+  return (
+    <div className="brand-lockup">
+      <span className="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2.5l7 3v5c0 4.3-2.8 7.6-7 9-4.2-1.4-7-4.7-7-9v-5l7-3z" fill="#fff" fillOpacity="0.18" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round"/>
+          <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </span>
+      <span className="brand-text">Wasaa<span className="life">Lifestyle</span></span>
+    </div>
+  );
+}
+
 function ProviderBookings() {
   const [bookings, setBookings] = useState([]);
   const [message, setMessage] = useState("");
@@ -25,41 +39,62 @@ function ProviderBookings() {
 
   const logout = () => { localStorage.clear(); navigate("/login"); };
 
-  return (
-    <div style={{ maxWidth: 650, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h1>My Jobs</h1>
-        <button onClick={logout}>Log out</button>
-      </div>
+  const statusBadge = (status) => {
+    if (status === "completed") return "trusted";
+    if (status === "confirmed") return "verified";
+    return "provisional";
+  };
 
-      {bookings.length === 0 ? (
-        <p style={{ color: "#666" }}>No job requests yet.</p>
-      ) : (
-        bookings.map((b) => (
-          <div key={b._id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 16, marginBottom: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <strong>{b.householdId?.fullName || "Household"}</strong>
-                <div style={{ fontSize: 13, color: "#666" }}>Status: {b.status}</div>
-              </div>
-              <div>
-                {b.status === "requested" && (
-                  <>
-                    <button onClick={() => updateStatus(b._id, "confirmed")} style={{ padding: 6, marginRight: 6 }}>Confirm</button>
-                    <button onClick={() => updateStatus(b._id, "rejected")} style={{ padding: 6 }}>Reject</button>
-                  </>
-                )}
-                {b.status === "confirmed" && (
-                  <button onClick={() => updateStatus(b._id, "completed")} style={{ padding: 6, background: "#2a9d8f", color: "white", border: "none", borderRadius: 4 }}>Mark completed</button>
-                )}
-                {b.status === "completed" && <span style={{ color: "#2a9d8f" }}>✓ Completed</span>}
+  return (
+    <>
+      <nav className="nav">
+        <div className="nav-inner">
+          <Brand />
+          <div className="nav-links">
+            <button onClick={() => navigate("/verify")}>Get verified</button>
+            <button className="primary" onClick={logout}>Log out</button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="page" style={{ maxWidth: 680 }}>
+        <h1 className="page-title">My jobs</h1>
+        <p className="lede">Respond to booking requests and mark jobs complete. Completed jobs build your trust score.</p>
+
+        {bookings.length === 0 ? (
+          <div className="empty">No job requests yet.</div>
+        ) : (
+          bookings.map((b) => (
+            <div className="card" key={b._id}>
+              <div className="row">
+                <div>
+                  <strong>{b.householdId?.fullName || "Household"}</strong>
+                  <div style={{ marginTop: 6 }}>
+                    <span className={`badge ${statusBadge(b.status)}`}>{b.status}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {b.status === "requested" && (
+                    <>
+                      <button className="btn btn-primary" style={{ padding: "9px 16px" }}
+                        onClick={() => updateStatus(b._id, "confirmed")}>Confirm</button>
+                      <button className="btn btn-danger" style={{ padding: "9px 16px" }}
+                        onClick={() => updateStatus(b._id, "rejected")}>Reject</button>
+                    </>
+                  )}
+                  {b.status === "confirmed" && (
+                    <button className="btn btn-dark" style={{ padding: "9px 16px" }}
+                      onClick={() => updateStatus(b._id, "completed")}>Mark completed</button>
+                  )}
+                  {b.status === "completed" && <span style={{ color: "var(--teal)", fontWeight: 600 }}>✓ Completed</span>}
+                </div>
               </div>
             </div>
-          </div>
-        ))
-      )}
-      {message && <p style={{ color: "#2a9d8f" }}>{message}</p>}
-    </div>
+          ))
+        )}
+        {message && <p className="success-msg">{message}</p>}
+      </div>
+    </>
   );
 }
 
