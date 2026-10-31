@@ -41,13 +41,35 @@ router.post("/", protect, restrictTo("household"), async (req, res) => {
       comment,
     });
 
-    //update the provider's rating signal and re-score
-    await updateProviderRating(booking.providerId);
+    // Recompute the provider's rating from all reviews, update complaint rate, then re-score.
+async function updateProviderRating(providerId) {
+  const provider = await Provider.findById(providerId);
+  if (!provider) return;
+
+  const reviews = await Review.find({ providerId });
+  if (reviews.length > 0) {
+    // average rating across all reviews
+    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+    provider.avgRating = sum / reviews.length;
+    provider.reviewCount = reviews.length;
+
+    // complaint rate = share of reviews that are low (1 or 2 stars)
+    const complaints = reviews.filter((r) => r.rating <= 2).length;
+    provider.complaintRate = complaints / reviews.length;
+  }
+
+  const { computeTrustScore } = require("../services/trustScore");
+  const result = computeTrustScore(provider);
+  provider.trustScore = { value: result.value, lastComputed: new Date() };
+
+  await provider.save();
+}
 
     res.status(201).json(review);
-  } catch (err) {
-    res.status(500).json({ message: "Review failed", error: err.message });
-  }
+    } catch (err) {
+      console.error("Review error:", err.message);
+      res.status(500).json({ message: "Review failed" });
+    }
 });
 
 //GET all reviews for a provider 
@@ -56,9 +78,10 @@ router.get("/provider/:providerId", async (req, res) => {
     const reviews = await Review.find({ providerId: req.params.providerId })
       .sort({ createdAt: -1 });
     res.json(reviews);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch reviews", error: err.message });
-  }
+    } catch (err) {
+      console.error("Review error:", err.message);
+      res.status(500).json({ message: "Review failed" });
+    }  
 });
 
 //Recompute the provider's average rating from all their reviews, then re-score.

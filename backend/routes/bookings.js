@@ -22,9 +22,10 @@ router.post("/", protect, restrictTo("household"), async (req, res) => {
     });
 
     res.status(201).json(booking);
-  } catch (err) {
-    res.status(500).json({ message: "Booking failed", error: err.message });
-  }
+    } catch (err) {
+      console.error("Booking error:", err.message);
+      res.status(500).json({ message: "Booking failed" });
+    }
 });
 
 //GET my bookings 
@@ -40,9 +41,10 @@ router.get("/mine", protect, async (req, res) => {
         .populate("householdId", "fullName phone");
     }
     res.json(bookings);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch bookings", error: err.message });
-  }
+    } catch (err) {
+      console.error("Booking error:", err.message);
+      res.status(500).json({ message: "Booking failed" });
+    }
 });
 
 //UPDATE booking status 
@@ -73,9 +75,10 @@ router.patch("/:id/status", protect, restrictTo("provider"), async (req, res) =>
     }
 
     res.json(booking);
-  } catch (err) {
-    res.status(500).json({ message: "Status update failed", error: err.message });
-  }
+      } catch (err) {
+      console.error("Booking error:", err.message);
+      res.status(500).json({ message: "Booking failed" });
+    }
 });
 
 //A newly completed job adds to the provider's track record, on top of their baseline.

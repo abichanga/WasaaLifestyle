@@ -3,37 +3,47 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { protect } = require("../middleware/auth");
+const { body, validationResult } = require("express-validator");
 
 const router = express.Router();
 
-//REGISTER
-router.post("/register", async (req, res) => {
-  try {
-    const { fullName, email, phone, password, role } = req.body;
-
-    //check if user already exists
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: "Email already registered" });
+// ----- REGISTER -----
+router.post(
+  "/register",
+  [
+    body("fullName").trim().notEmpty().withMessage("Full name is required")
+      .isLength({ max: 100 }).withMessage("Name too long"),
+    body("email").trim().isEmail().withMessage("A valid email is required")
+      .normalizeEmail(),
+    body("phone").trim().notEmpty().withMessage("Phone is required"),
+    body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
+    body("role").isIn(["household", "provider", "admin"]).withMessage("Invalid role"),
+  ],
+  async (req, res) => {
+    // check validation results
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-    //hash the password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
+    try {
+      const { fullName, email, phone, password, role } = req.body;
 
-    const user = await User.create({
-      fullName,
-      email,
-      phone,
-      password: hashedPassword,
-      role,
-    });
+      const existing = await User.findOne({ email });
+      if (existing) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
 
-    res.status(201).json({ message: "User registered", userId: user._id });
-  } catch (err) {
-    res.status(500).json({ message: "Registration failed", error: err.message });
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await User.create({ fullName, email, phone, password: hashedPassword, role });
+
+      res.status(201).json({ message: "User registered", userId: user._id });
+    } catch (err) {
+      console.error("Registration error:", err.message);   // log server-side
+      res.status(500).json({ message: "Registration failed" });   // generic to client
+    }
   }
-});
-
+);
 //LOGIN
 router.post("/login", async (req, res) => {
   try {
@@ -61,9 +71,10 @@ router.post("/login", async (req, res) => {
       token,
       user: { id: user._id, fullName: user.fullName, role: user.role },
     });
-  } catch (err) {
-    res.status(500).json({ message: "Login failed", error: err.message });
-  }
+    } catch (err) {
+      console.error("Login error:", err.message);
+      res.status(500).json({ message: "Login failed" });
+    }
 });
 
 // ----- GET current logged-in user -----

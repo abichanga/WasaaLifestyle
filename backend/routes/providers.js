@@ -22,9 +22,10 @@ router.post("/", protect, restrictTo("provider"), async (req, res) => {
     });
 
     res.status(201).json(provider);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to create provider", error: err.message });
-  }
+    } catch (err) {
+      console.error("Provider error:", err.message);
+      res.status(500).json({ message: "Failed to fetch provider" });
+    }
 });
 // GET /api/providers/search - ranked providers, optionally filtered by category
 router.get("/search", async (req, res) => {
@@ -60,9 +61,10 @@ router.get("/search", async (req, res) => {
     });
 
     res.json(results);
-  } catch (err) {
-    res.status(500).json({ message: "Search failed", error: err.message });
-  }
+    } catch (err) {
+      console.error("Provider error:", err.message);
+      res.status(500).json({ message: "Failed to fetch provider" });
+    }
 });
 
 //GET - a single provider's full profile, with trust score breakdown
@@ -81,9 +83,10 @@ router.get("/:id", async (req, res) => {
 
     //return the provider plus the breakdown
     res.json({ ...provider.toObject(), breakdown: scored.breakdown });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch provider", error: err.message });
-  }
+    } catch (err) {
+      console.error("Provider error:", err.message);
+      res.status(500).json({ message: "Failed to fetch provider" });
+    }
 });
 //GET the logged-in provider's own profile 
 router.get("/me/profile", protect, restrictTo("provider"), async (req, res) => {
@@ -95,9 +98,10 @@ router.get("/me/profile", protect, restrictTo("provider"), async (req, res) => {
       return res.status(404).json({ message: "Provider profile not found" });
     }
     res.json(provider);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch profile", error: err.message });
-  }
+    } catch (err) {
+      console.error("Provider error:", err.message);
+      res.status(500).json({ message: "Failed to fetch provider" });
+    }
 });
 
 module.exports = router;
