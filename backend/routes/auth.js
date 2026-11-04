@@ -16,7 +16,10 @@ router.post(
     body("email").trim().isEmail().withMessage("A valid email is required")
       .normalizeEmail(),
     body("phone").trim().notEmpty().withMessage("Phone is required"),
-    body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
+    body("password")
+      .isLength({ min: 8 }).withMessage("Password must be at least 8 characters")
+      .matches(/[A-Za-z]/).withMessage("Password must include a letter")
+      .matches(/[0-9]/).withMessage("Password must include a number"),
     body("role").isIn(["household", "provider", "admin"]).withMessage("Invalid role"),
   ],
   async (req, res) => {
@@ -87,6 +90,30 @@ router.get("/me", protect, async (req, res) => {
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch user", error: err.message });
+  }
+});
+
+// ----- UPDATE own account (name, email, phone) -----
+router.patch("/me", protect, async (req, res) => {
+  try {
+    const { fullName, email, phone } = req.body;
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // if changing email, make sure it's not taken by someone else
+    if (email && email !== user.email) {
+      const existing = await User.findOne({ email });
+      if (existing) return res.status(400).json({ message: "Email already in use" });
+      user.email = email;
+    }
+    if (fullName !== undefined) user.fullName = fullName;
+    if (phone !== undefined) user.phone = phone;
+
+    await user.save();
+    res.json({ message: "Account updated", user: { id: user._id, fullName: user.fullName, email: user.email, phone: user.phone, role: user.role } });
+  } catch (err) {
+    console.error("Account update error:", err.message);
+    res.status(500).json({ message: "Update failed" });
   }
 });
 

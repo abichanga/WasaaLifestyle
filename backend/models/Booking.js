@@ -8,6 +8,10 @@ const bookingSchema = new mongoose.Schema({
     enum: ["requested", "confirmed", "completed", "rejected"],
     default: "requested",
   },
+  scheduledDate: { type: String },    
+  scheduledTime: { type: String },    
+  address: { type: String },          
+  notes: { type: String },            
 }, { timestamps: true });
 
 module.exports = mongoose.model("Booking", bookingSchema);

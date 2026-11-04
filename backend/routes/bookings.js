@@ -5,10 +5,10 @@ const { protect, restrictTo } = require("../middleware/auth");
 
 const router = express.Router();
 
-//CREATE a booking 
+//CREATE a booking (household requests a provider) 
 router.post("/", protect, restrictTo("household"), async (req, res) => {
   try {
-    const { providerId } = req.body;
+    const { providerId, scheduledDate, scheduledTime, address, notes } = req.body;
 
     const provider = await Provider.findById(providerId);
     if (!provider) {
@@ -19,13 +19,17 @@ router.post("/", protect, restrictTo("household"), async (req, res) => {
       householdId: req.user.userId,
       providerId,
       status: "requested",
+      scheduledDate,
+      scheduledTime,
+      address,
+      notes,
     });
 
     res.status(201).json(booking);
-    } catch (err) {
-      console.error("Booking error:", err.message);
-      res.status(500).json({ message: "Booking failed" });
-    }
+  } catch (err) {
+    console.error("Booking error:", err.message);
+    res.status(500).json({ message: "Booking failed" });
+  }
 });
 
 //GET my bookings 
