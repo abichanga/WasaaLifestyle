@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
+import StatusStepper from "../components/StatusStepper";
 
 function Brand() {
   return (
@@ -22,6 +23,7 @@ function MyBookings() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState("");
+  const [expanded, setExpanded] = useState(null);
   const navigate = useNavigate();
 
   const load = () => {
@@ -58,6 +60,7 @@ function MyBookings() {
           <Brand />
           <div className="nav-links">
             <button onClick={() => navigate("/search")}>Search</button>
+            <button onClick={() => navigate("/account")}>Account</button>
             <button className="primary" onClick={logout}>Log out</button>
           </div>
         </div>
@@ -72,10 +75,25 @@ function MyBookings() {
         ) : (
           bookings.map((b) => (
             <div className="card" key={b._id}>
-              <div className="row">
-                <strong>{b.providerId?.bio ? b.providerId.bio.split(" - ")[0] : "Provider"}</strong>
-                <span className={`badge ${statusBadge(b.status)}`}>{b.status}</span>
+              <div className="row" style={{ cursor: "pointer" }}
+                onClick={() => setExpanded(expanded === b._id ? null : b._id)}>
+                <div style={{ flex: 1 }}>
+                  <strong>{b.providerId?.bio ? b.providerId.bio.split(" - ")[0] : "Provider"}</strong>
+                  <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
+                    {b.scheduledDate ? `${b.scheduledDate} at ${b.scheduledTime}` : "No date set"}
+                  </div>
+                  <StatusStepper status={b.status} />
+                </div>
               </div>
+
+              {expanded === b._id && (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)", fontSize: 14 }}>
+                  <div style={{ marginBottom: 6 }}><strong>Date & time:</strong> {b.scheduledDate || "—"} {b.scheduledTime || ""}</div>
+                  <div style={{ marginBottom: 6 }}><strong>Address:</strong> {b.address || "—"}</div>
+                  <div style={{ marginBottom: 6 }}><strong>Job details:</strong> {b.notes || "None provided"}</div>
+                  <div><strong>Status:</strong> {b.status}</div>
+                </div>
+              )}
 
               {b.status === "completed" && (
                 <div style={{ marginTop: 14 }}>
@@ -86,8 +104,7 @@ function MyBookings() {
                         {[5,4,3,2,1].map((n) => <option key={n} value={n}>{n} stars</option>)}
                       </select>
                       <input className="input" placeholder="Add a comment (optional)" value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        style={{ flex: 1, minWidth: 180, marginBottom: 0 }} />
+                        onChange={(e) => setComment(e.target.value)} style={{ flex: 1, minWidth: 180, marginBottom: 0 }} />
                       <button className="btn btn-primary" style={{ padding: "10px 18px" }}
                         onClick={() => submitReview(b._id)}>Submit</button>
                     </div>

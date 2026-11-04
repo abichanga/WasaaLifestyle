@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
+import StatusStepper from "../components/StatusStepper";
 
 function Brand() {
   return (
@@ -19,6 +20,7 @@ function Brand() {
 function ProviderBookings() {
   const [bookings, setBookings] = useState([]);
   const [message, setMessage] = useState("");
+  const [expanded, setExpanded] = useState(null);
   const navigate = useNavigate();
 
   const load = () => {
@@ -52,7 +54,7 @@ function ProviderBookings() {
           <Brand />
           <div className="nav-links">
             <button onClick={() => navigate("/verify")}>Get verified</button>
-            <button onClick={() => navigate("/edit-profile")}>Edit profile</button>
+            <button onClick={() => navigate("/account")}>Account</button>
             <button className="primary" onClick={logout}>Log out</button>
           </div>
         </div>
@@ -68,11 +70,12 @@ function ProviderBookings() {
           bookings.map((b) => (
             <div className="card" key={b._id}>
               <div className="row">
-                <div>
+                <div style={{ cursor: "pointer", flex: 1 }} onClick={() => setExpanded(expanded === b._id ? null : b._id)}>
                   <strong>{b.householdId?.fullName || "Household"}</strong>
-                  <div style={{ marginTop: 6 }}>
-                    <span className={`badge ${statusBadge(b.status)}`}>{b.status}</span>
+                  <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
+                    {b.scheduledDate ? `${b.scheduledDate} at ${b.scheduledTime}` : "No date set"} · tap for details
                   </div>
+                  <StatusStepper status={b.status} />
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {b.status === "requested" && (
@@ -80,7 +83,11 @@ function ProviderBookings() {
                       <button className="btn btn-primary" style={{ padding: "9px 16px" }}
                         onClick={() => updateStatus(b._id, "confirmed")}>Confirm</button>
                       <button className="btn btn-danger" style={{ padding: "9px 16px" }}
-                        onClick={() => updateStatus(b._id, "rejected")}>Reject</button>
+                        onClick={() => {
+                          if (window.confirm("Reject this booking? This cannot be undone.")) {
+                            updateStatus(b._id, "rejected");
+                          }
+                        }}>Reject</button>
                     </>
                   )}
                   {b.status === "confirmed" && (
@@ -90,6 +97,15 @@ function ProviderBookings() {
                   {b.status === "completed" && <span style={{ color: "var(--teal)", fontWeight: 600 }}>✓ Completed</span>}
                 </div>
               </div>
+
+              {expanded === b._id && (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)", fontSize: 14 }}>
+                  <div style={{ marginBottom: 6 }}><strong>When:</strong> {b.scheduledDate || "—"} {b.scheduledTime || ""}</div>
+                  <div style={{ marginBottom: 6 }}><strong>Where:</strong> {b.address || "—"}</div>
+                  <div style={{ marginBottom: 6 }}><strong>Job details:</strong> {b.notes || "None provided"}</div>
+                  <div><strong>Contact:</strong> {b.householdId?.phone || "—"}</div>
+                </div>
+              )}
             </div>
           ))
         )}

@@ -71,6 +71,7 @@ function Search() {
           <div className="nav-links">
             <button onClick={() => navigate("/")}>Home</button>
             <button onClick={() => navigate("/my-bookings")}>My bookings</button>
+            <button onClick={() => navigate("/account")}>Account</button>
             <button className="primary" onClick={logout}>Log out</button>
           </div>
         </div>

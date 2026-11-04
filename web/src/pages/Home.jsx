@@ -72,6 +72,7 @@ function Home() {
           <nav className="nav-links">
             <a onClick={() => navigate("/search")} style={{ cursor: "pointer" }}>Browse</a>
             {loggedIn && <a onClick={() => navigate("/my-bookings")} style={{ cursor: "pointer" }}>My bookings</a>}
+            {loggedIn && <a onClick={() => navigate("/account")}>Account</a>}
             {loggedIn
               ? <a className="cta" onClick={logout} style={{ cursor: "pointer" }}>Log out</a>
               : <a className="cta" onClick={() => navigate("/login")} style={{ cursor: "pointer" }}>Sign in</a>}

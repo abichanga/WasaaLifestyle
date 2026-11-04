@@ -8,6 +8,8 @@ function Provider() {
   const [reviews, setReviews] = useState([]);
   const [message, setMessage] = useState("");
   const [booking, setBooking] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ scheduledDate: "", scheduledTime: "", address: "", notes: "" });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,18 +17,23 @@ function Provider() {
     api.get(`/reviews/provider/${id}`).then((res) => setReviews(res.data)).catch(() => {});
   }, [id]);
 
-  const book = async () => {
+  const book = async (e) => {
+    e.preventDefault();
     setMessage("");
     setBooking(true);
     try {
-      await api.post("/bookings", { providerId: id });
+      await api.post("/bookings", { providerId: id, ...form });
       setMessage("Booking requested. The provider will confirm shortly.");
+      setShowForm(false);
+      setForm({ scheduledDate: "", scheduledTime: "", address: "", notes: "" });
     } catch (err) {
       setMessage(err.response?.data?.message || "Booking failed");
     } finally {
       setBooking(false);
     }
   };
+
+  const handleFormChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   if (!provider) return <div className="loading">Loading...</div>;
 
@@ -87,9 +94,36 @@ function Provider() {
             Completion and complaint history carry the most weight, because they predict reliability better than star ratings alone.
           </p>
           {provider.bio && <p style={{ color: "var(--ink-soft)", marginBottom: 20 }}>{provider.bio}</p>}
-          <button className="btn btn-primary" onClick={book} disabled={booking}>
-            {booking ? "Requesting..." : "Book this provider"}
-          </button>
+          {!showForm ? (
+            <button className="btn btn-primary" onClick={() => setShowForm(true)}>Book this provider</button>
+          ) : (
+            <form onSubmit={book} style={{ marginTop: 8 }}>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <label className="label">Date</label>
+                  <input className="input" type="date" name="scheduledDate" value={form.scheduledDate}
+                    onChange={handleFormChange} required />
+                </div>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <label className="label">Time</label>
+                  <input className="input" type="time" name="scheduledTime" value={form.scheduledTime}
+                    onChange={handleFormChange} required />
+                </div>
+              </div>
+              <label className="label">Address</label>
+              <input className="input" name="address" placeholder="Where should they come?"
+                value={form.address} onChange={handleFormChange} required />
+              <label className="label">What do you need done? (optional)</label>
+              <textarea className="input" name="notes" rows={3} placeholder="Briefly describe the job"
+                value={form.notes} onChange={handleFormChange} style={{ resize: "vertical", fontFamily: "inherit" }} />
+              <div style={{ display: "flex", gap: 10 }}>
+                <button className="btn btn-primary" type="submit" disabled={booking}>
+                  {booking ? "Requesting..." : "Confirm booking"}
+                </button>
+                <button className="btn btn-ghost" type="button" onClick={() => setShowForm(false)}>Cancel</button>
+              </div>
+            </form>
+          )}
           {message && <p className="success-msg">{message}</p>}
         </div>
       </div>

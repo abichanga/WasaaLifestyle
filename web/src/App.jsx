@@ -8,6 +8,7 @@ import Admin from "./pages/Admin";
 import Verify from "./pages/Verify";
 import Home from "./pages/Home";
 import EditProfile from "./pages/EditProfile";
+import Account from "./pages/Account";
 
 function App() {
   return (
@@ -22,7 +23,8 @@ function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/verify" element={<Verify />} />
         <Route path="/" element={<Home />} />
-        <Route path="/edit-profile" element={<EditProfile />} />      
+        <Route path="/edit-profile" element={<EditProfile />} />  
+        <Route path="/account" element={<Account />} />    
       </Routes>
     </BrowserRouter>
   );

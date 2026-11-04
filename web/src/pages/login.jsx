@@ -7,15 +7,39 @@ function Login() {
   const [form, setForm] = useState({
     fullName: "", email: "", phone: "", password: "", role: "household",
   });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const validate = () => {
+    const errs = {};
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Enter a valid email address";
+    if (isRegister) {
+      // stronger rules only on sign-up
+      if (form.password.length < 8) {
+        errs.password = "Password must be at least 8 characters";
+      } else if (!/[A-Za-z]/.test(form.password) || !/[0-9]/.test(form.password)) {
+        errs.password = "Password must include at least one letter and one number";
+      }
+      if (!form.fullName.trim()) errs.fullName = "Full name is required";
+      if (!form.phone.trim()) errs.phone = "Phone is required";
+    } else {
+      // on login, just require something, don't re-impose rules on existing passwords
+      if (!form.password) errs.password = "Password is required";
+    }
+    return errs;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const errs = validate();
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
     setLoading(true);
     try {
       if (isRegister) {
@@ -36,6 +60,8 @@ function Login() {
       setLoading(false);
     }
   };
+
+  const errStyle = { color: "var(--danger)", fontSize: 13, margin: "0 0 12px" };
 
   return (
     <div className="auth">
@@ -68,19 +94,30 @@ function Login() {
           <h1 className="auth-title">{isRegister ? "Create your account" : "Welcome back"}</h1>
           <p className="auth-sub">{isRegister ? "Join to find trusted help." : "Sign in to continue."}</p>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             {isRegister && (
               <>
                 <input className="input" name="fullName" placeholder="Full name"
-                  value={form.fullName} onChange={handleChange} required />
+                  value={form.fullName} onChange={handleChange}
+                  style={{ marginBottom: fieldErrors.fullName ? 4 : 12 }} />
+                {fieldErrors.fullName && <p style={errStyle}>{fieldErrors.fullName}</p>}
+
                 <input className="input" name="phone" placeholder="Phone number"
-                  value={form.phone} onChange={handleChange} required />
+                  value={form.phone} onChange={handleChange}
+                  style={{ marginBottom: fieldErrors.phone ? 4 : 12 }} />
+                {fieldErrors.phone && <p style={errStyle}>{fieldErrors.phone}</p>}
               </>
             )}
+
             <input className="input" name="email" type="email" placeholder="Email address"
-              value={form.email} onChange={handleChange} required />
+              value={form.email} onChange={handleChange}
+              style={{ marginBottom: fieldErrors.email ? 4 : 12 }} />
+            {fieldErrors.email && <p style={errStyle}>{fieldErrors.email}</p>}
+
             <input className="input" name="password" type="password" placeholder="Password"
-              value={form.password} onChange={handleChange} required />
+              value={form.password} onChange={handleChange}
+              style={{ marginBottom: fieldErrors.password ? 4 : 12 }} />
+            {fieldErrors.password && <p style={errStyle}>{fieldErrors.password}</p>}
 
             {isRegister && (
               <select className="select" name="role" value={form.role} onChange={handleChange}>
@@ -98,7 +135,7 @@ function Login() {
 
           <p className="muted" style={{ marginTop: 18, textAlign: "center" }}>
             {isRegister ? "Already have an account? " : "No account yet? "}
-            <button onClick={() => setIsRegister(!isRegister)}
+            <button onClick={() => { setIsRegister(!isRegister); setFieldErrors({}); setError(""); }}
               style={{ border: "none", background: "none", color: "var(--teal)", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>
               {isRegister ? "Sign in" : "Register"}
             </button>
