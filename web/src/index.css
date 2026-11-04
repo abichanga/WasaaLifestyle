@@ -185,3 +185,10 @@ section { max-width: 1040px; margin: 0 auto; padding: 48px max(16px, env(safe-ar
   .provider-card { flex-wrap: wrap; }
   .score-box { border-left: none; padding-left: 0; }
 }
+
+@media (max-width: 560px) {
+  .nav-inner, .nav-in { flex-wrap: wrap; gap: 8px; padding: 12px max(14px, env(safe-area-inset-left,0px)); }
+  .nav-links { gap: 2px; }
+  .nav-links button, .nav-links a { padding: 7px 10px; font-size: 13px; }
+  .brand-text, .wordmark { font-size: 18px; }
+}
