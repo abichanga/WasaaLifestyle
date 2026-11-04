@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   password: { type: String, required: true },   // will be hashed
   role: { type: String, enum: ["household", "provider", "admin"], required: true },
+  resetToken: { type: String },
+  resetTokenExpiry: { type: Date },
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);
