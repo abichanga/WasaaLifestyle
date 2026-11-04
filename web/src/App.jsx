@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/login";
-import Search from "./pages/Search";
+import Search from "./pages/search";
 import Provider from "./pages/Provider";
 import MyBookings from "./pages/MyBookings";
 import ProviderBookings from "./pages/ProviderBookings";
 import Admin from "./pages/Admin";
 import Verify from "./pages/Verify";
+import Home from "./pages/Home";
+import EditProfile from "./pages/EditProfile";
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <Route path="*" element={<Navigate to="/login" />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/edit-profile" element={<EditProfile />} />      
       </Routes>
     </BrowserRouter>
   );

@@ -29,7 +29,7 @@ function Login() {
       const role = res.data.user.role;
       if (role === "admin") navigate("/admin");
       else if (role === "provider") navigate("/my-jobs");
-      else navigate("/search");
+      else navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     } finally {

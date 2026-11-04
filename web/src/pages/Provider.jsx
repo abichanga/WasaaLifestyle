@@ -39,6 +39,7 @@ function Provider() {
     { label: "Verification", value: bd.verification || 0 },
   ];
   const maxPts = Math.max(...signals.map((s) => s.value), 1);
+  const fullName = provider.userId?.fullName || "Provider";
 
   return (
     <div className="page" style={{ maxWidth: 680 }}>
@@ -49,13 +50,22 @@ function Provider() {
         {/* header */}
         <div style={{ padding: "28px 28px 24px", borderBottom: "1px solid var(--line)",
           display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 26, margin: "0 0 6px" }}>
-              {provider.userId?.fullName}
-            </h1>
-            <div className="meta">
-              <span className={`badge ${provider.verificationTier}`}>{provider.verificationTier}</span>
-              <span className="sub">{provider.serviceCategoryId?.name} · ★ {provider.avgRating} · {provider.reviewCount} reviews</span>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 16 }}>
+            <div className="avatar" style={{ width: 60, height: 60, fontSize: 22 }}>
+              {provider.photo
+                ? <img src={provider.photo} alt={fullName} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                : fullName[0]}
+            </div>
+            <div>
+              <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 26, margin: "0 0 6px" }}>
+                {fullName}
+              </h1>
+              <div className="meta">
+                <span className={`badge ${provider.verificationTier}`}>{provider.verificationTier}</span>
+                <span className="sub">
+                  {provider.serviceCategoryId?.name}{provider.area ? ` · ${provider.area}` : ""} · ★ {provider.avgRating} · {provider.reviewCount} reviews
+                </span>
+              </div>
             </div>
           </div>
           <div style={{ textAlign: "center" }}>

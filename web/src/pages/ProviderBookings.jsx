@@ -52,6 +52,7 @@ function ProviderBookings() {
           <Brand />
           <div className="nav-links">
             <button onClick={() => navigate("/verify")}>Get verified</button>
+            <button onClick={() => navigate("/edit-profile")}>Edit profile</button>
             <button className="primary" onClick={logout}>Log out</button>
           </div>
         </div>

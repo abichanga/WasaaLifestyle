@@ -66,13 +66,13 @@ function Admin() {
               <div style={{ display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
                 {p.identityDocument && (
                   <a className="btn btn-ghost" style={{ padding: "8px 14px", textDecoration: "none" }}
-                    href={`http://localhost:5000/${p.identityDocument}`} target="_blank" rel="noreferrer">
+                    href={p.identityDocument} target="_blank" rel="noreferrer">
                     View identity document
                   </a>
                 )}
                 {p.credentialDocument && (
                   <a className="btn btn-ghost" style={{ padding: "8px 14px", textDecoration: "none" }}
-                    href={`http://localhost:5000/${p.credentialDocument}`} target="_blank" rel="noreferrer">
+                    href={p.credentialDocument} target="_blank" rel="noreferrer">
                     View credential document
                   </a>
                 )}
