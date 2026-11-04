@@ -4,6 +4,8 @@ const providerSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   bio: { type: String },
   serviceCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "ServiceCategory" },
+  area: { type: String, default: "" },
+  photo: { type: String, default: "" },   
 
   // verification (result only - no raw ID numbers)
   identityVerified: { type: Boolean, default: false },

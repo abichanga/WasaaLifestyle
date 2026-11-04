@@ -27,24 +27,26 @@ router.post("/", protect, restrictTo("provider"), async (req, res) => {
       res.status(500).json({ message: "Failed to fetch provider" });
     }
 });
-// GET /api/providers/search - ranked providers, optionally filtered by category
+
+// GET /api/providers/search - ranked providers, optional category + area filters
 router.get("/search", async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, area } = req.query;
 
-    //build the filter: if a category is given, filter by it
     const filter = {};
     if (category) {
       filter.serviceCategoryId = category;
     }
+    if (area) {
+      // case-insensitive match so "westlands" and "Westlands" both work
+      filter.area = { $regex: new RegExp(area, "i") };
+    }
 
-    //fetch matching providers, sorted by trust score (highest first)
     const providers = await Provider.find(filter)
       .populate("userId", "fullName phone")
       .populate("serviceCategoryId", "name")
-      .sort({ "trustScore.value": -1 });   // -1 = descending
+      .sort({ "trustScore.value": -1 });
 
-    //shape the response: include the trust score and the live breakdown
     const { computeTrustScore } = require("../services/trustScore");
     const results = providers.map((p) => {
       const scored = computeTrustScore(p);
@@ -52,6 +54,8 @@ router.get("/search", async (req, res) => {
         id: p._id,
         name: p.userId?.fullName,
         category: p.serviceCategoryId?.name,
+        area: p.area,
+        photo: p.photo,
         verificationTier: p.verificationTier,
         trustScore: p.trustScore.value,
         breakdown: scored.breakdown,
@@ -61,10 +65,10 @@ router.get("/search", async (req, res) => {
     });
 
     res.json(results);
-    } catch (err) {
-      console.error("Provider error:", err.message);
-      res.status(500).json({ message: "Failed to fetch provider" });
-    }
+  } catch (err) {
+    console.error("Search error:", err.message);
+    res.status(500).json({ message: "Search failed" });
+  }
 });
 
 //GET - a single provider's full profile, with trust score breakdown
@@ -102,6 +106,29 @@ router.get("/me/profile", protect, restrictTo("provider"), async (req, res) => {
       console.error("Provider error:", err.message);
       res.status(500).json({ message: "Failed to fetch provider" });
     }
+});
+
+const upload = require("../middleware/upload");
+
+//PATCH - the logged-in provider updates their own profile (bio, area, photo)
+router.patch("/me/profile", protect, restrictTo("provider"), upload.single("photo"), async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ userId: req.user.userId });
+    if (!provider) {
+      return res.status(404).json({ message: "Provider profile not found" });
+    }
+
+    const { bio, area } = req.body;
+    if (bio !== undefined) provider.bio = bio;
+    if (area !== undefined) provider.area = area;
+    if (req.file) provider.photo = req.file.path;   // Cloudinary URL
+
+    await provider.save();
+    res.json({ message: "Profile updated", provider });
+  } catch (err) {
+    console.error("Profile update error:", err.message);
+    res.status(500).json({ message: "Profile update failed" });
+  }
 });
 
 module.exports = router;

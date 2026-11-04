@@ -12,6 +12,7 @@ const ServiceCategory = require("./models/ServiceCategory");
 
 const SAMPLE_SIZE = 50;
 const CATEGORIES = ["Plumbing", "Electrical", "Carpentry", "Appliance Repair"];
+const AREAS = ["Westlands", "Kilimani", "Lavington", "Karen", "Kileleshwa", "Roysambu", "Kasarani", "Embakasi", "South B", "Langata", "Parklands", "Donholm"];
 
 //generate a simple fake name/email for each provider 
 const FIRST = ["John","Mary","Peter","Grace","David","Faith","James","Ann","Paul","Ruth","Samuel","Joyce"];
@@ -76,6 +77,7 @@ async function seed() {
       complaintRate: parseFloat(r.complaint_rate),
       confirmedJobCount: parseInt(r.confirmed_job_count),
       reviewCount: parseInt(r.review_count),
+      area: AREAS[Math.floor(Math.random() * AREAS.length)],
     });
   }
 

@@ -57,7 +57,7 @@ app.use("/api/providers", require("./routes/providers"));
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/reviews", require("./routes/reviews"));
 app.use("/api/verification", require("./routes/verification"));
-app.use("/uploads", express.static("uploads"));
+
 
 // test route
 app.get("/", (req, res) => {
