@@ -93,6 +93,14 @@ function Login() {
 
           <h1 className="auth-title">{isRegister ? "Create your account" : "Welcome back"}</h1>
           <p className="auth-sub">{isRegister ? "Join to find trusted help." : "Sign in to continue."}</p>
+           {!isRegister && (
+              <p style={{ textAlign: "right", margin: "-4px 0 12px" }}>
+                <button type="button" onClick={() => navigate("/forgot-password")}
+                  style={{ border: "none", background: "none", color: "var(--teal)", cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
+                  Forgot password?
+                </button>
+              </p>
+            )}
 
           <form onSubmit={handleSubmit} noValidate>
             {isRegister && (
