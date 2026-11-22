@@ -92,7 +92,7 @@ router.get("/:id", async (req, res) => {
       res.status(500).json({ message: "Failed to fetch provider" });
     }
 });
-//GET the logged-in provider's own profile 
+//GET the logged-in provider's own profile, with trust score breakdown
 router.get("/me/profile", protect, restrictTo("provider"), async (req, res) => {
   try {
     const provider = await Provider.findOne({ userId: req.user.userId })
@@ -101,7 +101,12 @@ router.get("/me/profile", protect, restrictTo("provider"), async (req, res) => {
     if (!provider) {
       return res.status(404).json({ message: "Provider profile not found" });
     }
-    res.json(provider);
+
+    // compute the live breakdown so the provider can see what makes up their score
+    const { computeTrustScore } = require("../services/trustScore");
+    const scored = computeTrustScore(provider);
+
+    res.json({ ...provider.toObject(), breakdown: scored.breakdown });
     } catch (err) {
       console.error("Provider error:", err.message);
       res.status(500).json({ message: "Failed to fetch provider" });
