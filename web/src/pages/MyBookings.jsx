@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 import StatusStepper from "../components/StatusStepper";
 
+// chip options shown based on the rating
+const POSITIVE_CHIPS = ["On time", "Professional", "Quality work", "Fair price", "Clean & tidy", "Would rebook"];
+const NEGATIVE_CHIPS = ["Arrived late", "Poor workmanship", "Overpriced", "Unprofessional", "Didn't finish", "No-show"];
+
 function Brand() {
   return (
     <div className="brand-lockup">
@@ -21,6 +25,7 @@ function MyBookings() {
   const [bookings, setBookings] = useState([]);
   const [reviewing, setReviewing] = useState(null);
   const [rating, setRating] = useState(5);
+  const [selectedTags, setSelectedTags] = useState([]);
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState("");
   const [expanded, setExpanded] = useState(null);
@@ -31,12 +36,34 @@ function MyBookings() {
   };
   useEffect(() => { load(); }, []);
 
+  // which chips to show depends on the rating
+  const chips = rating >= 4 ? POSITIVE_CHIPS : NEGATIVE_CHIPS;
+
+  const toggleTag = (tag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const startReview = (bookingId) => {
+    setReviewing(bookingId);
+    setRating(5);
+    setSelectedTags([]);
+    setComment("");
+  };
+
   const submitReview = async (bookingId) => {
     setMessage("");
     try {
-      await api.post("/reviews", { bookingId, rating: Number(rating), comment });
+      await api.post("/reviews", {
+        bookingId,
+        rating: Number(rating),
+        comment,
+        tags: selectedTags,
+      });
       setMessage("Review submitted, thank you.");
       setReviewing(null);
+      setSelectedTags([]);
       setComment("");
       load();
     } catch (err) {
@@ -45,13 +72,6 @@ function MyBookings() {
   };
 
   const logout = () => { localStorage.clear(); navigate("/login"); };
-
-  const statusBadge = (status) => {
-    if (status === "completed") return "trusted";
-    if (status === "confirmed") return "verified";
-    if (status === "rejected") return "provisional";
-    return "provisional";
-  };
 
   return (
     <>
@@ -98,19 +118,59 @@ function MyBookings() {
               {b.status === "completed" && (
                 <div style={{ marginTop: 14 }}>
                   {reviewing === b._id ? (
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      <select className="select" value={rating} onChange={(e) => setRating(e.target.value)}
-                        style={{ width: "auto", marginBottom: 0 }}>
-                        {[5,4,3,2,1].map((n) => <option key={n} value={n}>{n} stars</option>)}
-                      </select>
-                      <input className="input" placeholder="Add a comment (optional)" value={comment}
-                        onChange={(e) => setComment(e.target.value)} style={{ flex: 1, minWidth: 180, marginBottom: 0 }} />
-                      <button className="btn btn-primary" style={{ padding: "10px 18px" }}
-                        onClick={() => submitReview(b._id)}>Submit</button>
+                    <div>
+                      {/* star rating */}
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ fontSize: 13, color: "var(--ink-soft)", display: "block", marginBottom: 6 }}>
+                          How was it?
+                        </label>
+                        <select className="select" value={rating} onChange={(e) => { setRating(e.target.value); setSelectedTags([]); }}
+                          style={{ width: "auto", marginBottom: 0 }}>
+                          {[5,4,3,2,1].map((n) => <option key={n} value={n}>{n} stars</option>)}
+                        </select>
+                      </div>
+
+                      {/* rating-aware chips */}
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ fontSize: 13, color: "var(--ink-soft)", display: "block", marginBottom: 8 }}>
+                          {rating >= 4 ? "What went well?" : "What went wrong?"}
+                        </label>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {chips.map((tag) => {
+                            const active = selectedTags.includes(tag);
+                            return (
+                              <button key={tag} type="button" onClick={() => toggleTag(tag)}
+                                style={{
+                                  padding: "7px 14px",
+                                  borderRadius: 999,
+                                  border: active ? "1.5px solid var(--teal)" : "1.5px solid var(--line)",
+                                  background: active ? "var(--teal-soft, #e6f4f1)" : "#fff",
+                                  color: active ? "var(--teal-deep, var(--teal))" : "var(--ink)",
+                                  fontSize: 13,
+                                  cursor: "pointer",
+                                  fontWeight: active ? 600 : 400,
+                                }}>
+                                {tag}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* optional comment */}
+                      <input className="input" placeholder="Add a note (optional)" value={comment}
+                        onChange={(e) => setComment(e.target.value)} style={{ marginBottom: 10 }} />
+
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn btn-primary" style={{ padding: "10px 18px" }}
+                          onClick={() => submitReview(b._id)}>Submit review</button>
+                        <button className="btn btn-ghost" style={{ padding: "10px 18px" }}
+                          onClick={() => setReviewing(null)}>Cancel</button>
+                      </div>
                     </div>
                   ) : (
                     <button className="btn btn-ghost" style={{ padding: "8px 16px" }}
-                      onClick={() => setReviewing(b._id)}>Leave a review</button>
+                      onClick={() => startReview(b._id)}>Leave a review</button>
                   )}
                 </div>
               )}

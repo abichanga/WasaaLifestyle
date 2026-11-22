@@ -48,6 +48,14 @@ function Provider() {
   const maxPts = Math.max(...signals.map((s) => s.value), 1);
   const fullName = provider.userId?.fullName || "Provider";
 
+  // count how often each feedback tag appears across all reviews
+  const NEGATIVE_TAGS = ["Arrived late", "Poor workmanship", "Overpriced", "Unprofessional", "Didn't finish", "No-show"];
+  const tagCounts = {};
+  reviews.forEach((r) => (r.tags || []).forEach((t) => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+  const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+  const praised = sortedTags.filter(([t]) => !NEGATIVE_TAGS.includes(t)).slice(0, 4);
+  const issues = sortedTags.filter(([t]) => NEGATIVE_TAGS.includes(t)).slice(0, 3);
+
   return (
     <div className="page" style={{ maxWidth: 680 }}>
       <button className="btn btn-ghost" style={{ marginBottom: 24, padding: "8px 16px" }}
@@ -93,6 +101,43 @@ function Provider() {
           <p className="note">
             Completion and complaint history carry the most weight, because they predict reliability better than star ratings alone.
           </p>
+
+          {(praised.length > 0 || issues.length > 0) && (
+            <div style={{ marginBottom: 20 }}>
+              {praised.length > 0 && (
+                <div style={{ marginBottom: issues.length > 0 ? 12 : 0 }}>
+                  <div style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 8 }}>Often praised for</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {praised.map(([tag, count]) => (
+                      <span key={tag} style={{
+                        padding: "6px 13px", borderRadius: 999,
+                        background: "var(--teal-soft, #e6f4f1)", color: "var(--teal-deep, var(--teal))",
+                        fontSize: 13, fontWeight: 500,
+                      }}>
+                        {tag} <span style={{ opacity: 0.6 }}>· {count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {issues.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 8 }}>Common issues</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {issues.map(([tag, count]) => (
+                      <span key={tag} style={{
+                        padding: "6px 13px", borderRadius: 999,
+                        background: "#fbeaea", color: "#b3261e",
+                        fontSize: 13, fontWeight: 500,
+                      }}>
+                        {tag} <span style={{ opacity: 0.6 }}>· {count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {provider.bio && <p style={{ color: "var(--ink-soft)", marginBottom: 20 }}>{provider.bio}</p>}
           {!showForm ? (
             <button className="btn btn-primary" onClick={() => setShowForm(true)}>Book this provider</button>
@@ -136,7 +181,21 @@ function Provider() {
         reviews.map((r) => (
           <div className="card" key={r._id} style={{ padding: "16px 20px" }}>
             <strong>★ {r.rating}</strong>
-            {r.comment && <p style={{ margin: "6px 0 0", color: "var(--ink-soft)" }}>{r.comment}</p>}
+            {r.tags && r.tags.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                {r.tags.map((t) => {
+                  const neg = NEGATIVE_TAGS.includes(t);
+                  return (
+                    <span key={t} style={{
+                      padding: "3px 10px", borderRadius: 999, fontSize: 12,
+                      background: neg ? "#fbeaea" : "var(--teal-soft, #e6f4f1)",
+                      color: neg ? "#b3261e" : "var(--teal-deep, var(--teal))",
+                    }}>{t}</span>
+                  );
+                })}
+              </div>
+            )}
+            {r.comment && <p style={{ margin: "8px 0 0", color: "var(--ink-soft)" }}>{r.comment}</p>}
           </div>
         ))
       )}

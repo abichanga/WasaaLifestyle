@@ -21,15 +21,27 @@ function Account() {
   const [role, setRole] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // fall back to the stored user's role immediately, so Back works even before the fetch returns
+    try {
+      const stored = JSON.parse(localStorage.getItem("user"));
+      if (stored?.role) setRole(stored.role);
+    } catch {
+      // ignore bad/missing stored user
+    }
+
     api.get("/auth/me")
       .then((res) => {
         setForm({ fullName: res.data.fullName || "", email: res.data.email || "", phone: res.data.phone || "" });
         setRole(res.data.role || "");
       })
-      .catch(() => {});
+      .catch(() => {
+        setMessage("Could not load your account details. Please refresh.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -69,28 +81,34 @@ function Account() {
         <h1 className="page-title">Account settings</h1>
         <p className="lede">Update your name and contact details.</p>
 
-        <form onSubmit={save} className="card">
-          <label className="label">Full name</label>
-          <input className="input" name="fullName" value={form.fullName} onChange={handleChange} required />
+        {loading ? (
+          <div className="loading">Loading your details...</div>
+        ) : (
+          <>
+            <form onSubmit={save} className="card">
+              <label className="label">Full name</label>
+              <input className="input" name="fullName" value={form.fullName} onChange={handleChange} required />
 
-          <label className="label">Email</label>
-          <input className="input" name="email" type="email" value={form.email} onChange={handleChange} required />
+              <label className="label">Email</label>
+              <input className="input" name="email" type="email" value={form.email} onChange={handleChange} required />
 
-          <label className="label">Phone</label>
-          <input className="input" name="phone" value={form.phone} onChange={handleChange} required />
+              <label className="label">Phone</label>
+              <input className="input" name="phone" value={form.phone} onChange={handleChange} required />
 
-          <button className="btn btn-primary" type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save changes"}
-          </button>
-          {message && <p className="success-msg">{message}</p>}
-        </form>
+              <button className="btn btn-primary" type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save changes"}
+              </button>
+              {message && <p className="success-msg">{message}</p>}
+            </form>
 
-        {role === "provider" && (
-          <div className="card" style={{ marginTop: 16 }}>
-            <strong>Provider profile</strong>
-            <p className="muted" style={{ margin: "6px 0 12px" }}>Edit your photo, bio and area shown to households.</p>
-            <button className="btn btn-ghost" onClick={() => navigate("/edit-profile")}>Edit provider profile</button>
-          </div>
+            {role === "provider" && (
+              <div className="card" style={{ marginTop: 16 }}>
+                <strong>Provider profile</strong>
+                <p className="muted" style={{ margin: "6px 0 12px" }}>Edit your photo, bio and area shown to households.</p>
+                <button className="btn btn-ghost" onClick={() => navigate("/edit-profile")}>Edit provider profile</button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </>

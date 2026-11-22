@@ -19,12 +19,14 @@ function Brand() {
 
 function ProviderBookings() {
   const [bookings, setBookings] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [message, setMessage] = useState("");
   const [expanded, setExpanded] = useState(null);
   const navigate = useNavigate();
 
   const load = () => {
     api.get("/bookings/mine").then((res) => setBookings(res.data)).catch(() => {});
+    api.get("/providers/me/profile").then((res) => setProfile(res.data)).catch(() => {});
   };
   useEffect(() => { load(); }, []);
 
@@ -47,6 +49,56 @@ function ProviderBookings() {
     return "provisional";
   };
 
+  // trust-score card built from the provider's own profile + breakdown
+  const scoreCard = () => {
+    if (!profile) return null;
+    const ts = profile.trustScore?.value ?? 0;
+    const bd = profile.breakdown || {};
+    const signals = [
+      { key: "completion", label: "Job completion", value: bd.completion || 0 },
+      { key: "lowComplaints", label: "Low complaints", value: bd.lowComplaints || 0 },
+      { key: "rating", label: "Customer rating", value: bd.rating || 0 },
+      { key: "verification", label: "Verification", value: bd.verification || 0 },
+    ];
+    const maxPts = Math.max(...signals.map((s) => s.value), 1);
+
+    // the weakest signal is where they can improve most
+    const weakest = [...signals].sort((a, b) => a.value - b.value)[0];
+    const tips = {
+      completion: "Completing more of the jobs you accept will raise your score the most.",
+      lowComplaints: "Avoiding complaints and low ratings will lift your score.",
+      rating: "Earning higher ratings from happy customers will help your score.",
+      verification: "Getting verified raises your standing with households.",
+    };
+
+    return (
+      <div className="card" style={{ marginBottom: 20, padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "22px 24px 18px", borderBottom: "1px solid var(--line)",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 4 }}>Your trust score</div>
+            <span className={`badge ${profile.verificationTier}`}>{profile.verificationTier}</span>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 46, fontWeight: 600, color: "var(--teal)", lineHeight: 1 }}>{ts}</div>
+            <div className="score-cap">out of 100</div>
+          </div>
+        </div>
+        <div style={{ padding: "18px 24px 22px" }}>
+          {signals.map((s) => (
+            <div className="sig" key={s.key}>
+              <div className="sig-row"><span>{s.label}</span><span className="pts">{s.value} pts</span></div>
+              <div className="track"><div className="fill" style={{ width: `${(s.value / maxPts) * 100}%` }} /></div>
+            </div>
+          ))}
+          <p className="note" style={{ marginTop: 14 }}>
+            <strong>To improve: </strong>{tips[weakest.key]}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <nav className="nav">
@@ -63,6 +115,8 @@ function ProviderBookings() {
       <div className="page" style={{ maxWidth: 680 }}>
         <h1 className="page-title">My jobs</h1>
         <p className="lede">Respond to booking requests and mark jobs complete. Completed jobs build your trust score.</p>
+
+        {scoreCard()}
 
         {bookings.length === 0 ? (
           <div className="empty">No job requests yet.</div>
@@ -101,7 +155,26 @@ function ProviderBookings() {
               {expanded === b._id && (
                 <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)", fontSize: 14 }}>
                   <div style={{ marginBottom: 6 }}><strong>When:</strong> {b.scheduledDate || "—"} {b.scheduledTime || ""}</div>
-                  <div style={{ marginBottom: 6 }}><strong>Where:</strong> {b.address || "—"}</div>
+                  <div style={{ marginBottom: 6 }}>
+                    <strong>Where:</strong> {b.address || "—"}
+                    {b.address && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          marginLeft: 10, display: "inline-flex", alignItems: "center", gap: 5,
+                          fontSize: 13, color: "var(--teal)", fontWeight: 600, textDecoration: "none",
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                          <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        Get directions
+                      </a>
+                    )}
+                  </div>
                   <div style={{ marginBottom: 6 }}><strong>Job details:</strong> {b.notes || "None provided"}</div>
                   <div><strong>Contact:</strong> {b.householdId?.phone || "—"}</div>
                 </div>
