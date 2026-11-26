@@ -78,7 +78,7 @@ function Provider() {
               <div className="meta">
                 <span className={`badge ${provider.verificationTier}`}>{provider.verificationTier}</span>
                 <span className="sub">
-                  {provider.serviceCategoryId?.name}{provider.area ? ` · ${provider.area}` : ""} · ★ {provider.avgRating} · {provider.reviewCount} reviews
+                  {provider.serviceCategoryId?.name}{provider.area ? ` · ${provider.area}` : ""} · ★ {Number(provider.avgRating || 0).toFixed(1)} · {provider.reviewCount} reviews
                 </span>
               </div>
             </div>

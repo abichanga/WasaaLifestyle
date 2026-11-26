@@ -123,7 +123,7 @@ function Search() {
                   <p className="pc-cat">{p.category}</p>
                   <div className="meta">
                     <span className={`badge ${p.verificationTier}`}>{p.verificationTier}</span>
-                    <span className="sub">{p.area ? `${p.area} · ` : ""}★ {p.avgRating} · {p.reviewCount} reviews</span>
+                    <span className="sub">{p.area ? `${p.area} · ` : ""}★ {Number(p.avgRating || 0).toFixed(1)} · {p.reviewCount} reviews</span>
                   </div>
                 </div>
                 <div className="score-box">
