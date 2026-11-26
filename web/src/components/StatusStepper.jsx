@@ -1,6 +1,8 @@
 function StatusStepper({ status }) {
   // the happy path of statuses
-  const steps = ["requested", "confirmed", "completed"];
+  const steps = ["requested", "confirmed", "awaiting_household", "completed"];
+  // nicer text for the step labels
+  const labels = { awaiting_household: "job done" };
 
   // rejected is a dead-end, show it separately
   if (status === "rejected") {
@@ -34,7 +36,7 @@ function StatusStepper({ status }) {
                 fontSize: 11, textTransform: "capitalize",
                 color: done ? "var(--teal)" : "var(--ink-soft)",
                 fontWeight: done ? 600 : 400, whiteSpace: "nowrap",
-              }}>{step}</span>
+              }}>{labels[step] || step}</span>
             </div>
             {/* connector line (not after the last step) */}
             {i < steps.length - 1 && (

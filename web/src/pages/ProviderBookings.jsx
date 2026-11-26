@@ -34,7 +34,9 @@ function ProviderBookings() {
     setMessage("");
     try {
       await api.patch(`/bookings/${bookingId}/status`, { status });
-      setMessage(`Booking ${status}.`);
+      setMessage(status === "awaiting_household"
+        ? "Marked as done. The household will be asked to confirm."
+        : `Booking ${status}.`);
       load();
     } catch (err) {
       setMessage(err.response?.data?.message || "Update failed");
@@ -146,7 +148,10 @@ function ProviderBookings() {
                   )}
                   {b.status === "confirmed" && (
                     <button className="btn btn-dark" style={{ padding: "9px 16px" }}
-                      onClick={() => updateStatus(b._id, "completed")}>Mark completed</button>
+                      onClick={() => updateStatus(b._id, "awaiting_household")}>Mark job done</button>
+                  )}
+                  {b.status === "awaiting_household" && (
+                    <span style={{ color: "var(--ink-soft)", fontSize: 13 }}>Waiting for household to confirm</span>
                   )}
                   {b.status === "completed" && <span style={{ color: "var(--teal)", fontWeight: 600 }}>✓ Completed</span>}
                 </div>

@@ -54,9 +54,19 @@ router.get("/mine", protect, async (req, res) => {
 //UPDATE booking status 
 router.patch("/:id/status", protect, restrictTo("provider"), async (req, res) => {
   try {
-    const { status } = req.body;
-    const allowed = ["confirmed", "completed", "rejected"];
-    if (!allowed.includes(status)) {
+    let { status } = req.body;
+
+    // the provider can no longer complete a job on their own.
+    // "completed" from the provider now means "I'm done, household please confirm".
+    if (status === "completed") status = "awaiting_household";
+
+    // which status each move is allowed to come from
+    const validFrom = {
+      confirmed: ["requested"],
+      rejected: ["requested"],
+      awaiting_household: ["confirmed"],
+    };
+    if (!validFrom[status]) {
       return res.status(400).json({ message: "Invalid status" });
     }
 
@@ -70,12 +80,48 @@ router.patch("/:id/status", protect, restrictTo("provider"), async (req, res) =>
       return res.status(403).json({ message: "Not your booking" });
     }
 
-    const previousStatus = booking.status;
+    if (!validFrom[status].includes(booking.status)) {
+      return res.status(400).json({ message: `Can't move a ${booking.status} booking to ${status}` });
+    }
+
     booking.status = status;
+    if (status === "awaiting_household") booking.providerMarkedDoneAt = new Date();
     await booking.save();
 
-    if (status === "completed" && previousStatus !== "completed") {
-      await updateProviderSignals(provider._id);
+    res.json(booking);
+      } catch (err) {
+      console.error("Booking error:", err.message);
+      res.status(500).json({ message: "Booking failed" });
+    }
+});
+
+//HOUSEHOLD confirms (or disputes) that the job was actually done
+router.patch("/:id/confirm-completion", protect, restrictTo("household"), async (req, res) => {
+  try {
+    const { confirmed } = req.body; // true = job done, false = not done yet
+
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    if (!booking.householdId.equals(req.user.userId)) {
+      return res.status(403).json({ message: "Not your booking" });
+    }
+    if (booking.status !== "awaiting_household") {
+      return res.status(400).json({ message: "The provider hasn't marked this job as done yet" });
+    }
+
+    if (confirmed === true) {
+      booking.status = "completed";
+      booking.householdConfirmedAt = new Date();
+      await booking.save();
+      // only a household-confirmed job counts toward the trust score
+      await updateProviderSignals(booking.providerId);
+    } else {
+      // household says it isn't finished, send it back to the provider
+      booking.status = "confirmed";
+      booking.providerMarkedDoneAt = undefined;
+      await booking.save();
     }
 
     res.json(booking);

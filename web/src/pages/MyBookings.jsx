@@ -71,6 +71,20 @@ function MyBookings() {
     }
   };
 
+  // household confirms the provider really finished (or sends it back)
+  const confirmCompletion = async (bookingId, confirmed) => {
+    setMessage("");
+    try {
+      await api.patch(`/bookings/${bookingId}/confirm-completion`, { confirmed });
+      setMessage(confirmed
+        ? "Thanks for confirming. You can now leave a review."
+        : "Okay, we've let the provider know the job isn't finished.");
+      load();
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Could not update booking");
+    }
+  };
+
   const logout = () => { localStorage.clear(); navigate("/login"); };
 
   return (
@@ -112,6 +126,24 @@ function MyBookings() {
                   <div style={{ marginBottom: 6 }}><strong>Address:</strong> {b.address || "—"}</div>
                   <div style={{ marginBottom: 6 }}><strong>Job details:</strong> {b.notes || "None provided"}</div>
                   <div><strong>Status:</strong> {b.status}</div>
+                </div>
+              )}
+
+              {b.status === "awaiting_household" && (
+                <div style={{ marginTop: 14, padding: 14, borderRadius: 10, background: "var(--teal-soft, #e6f4f1)" }}>
+                  <div style={{ fontSize: 14, marginBottom: 10 }}>
+                    The provider says this job is done. Was it completed?
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="btn btn-primary" style={{ padding: "9px 16px" }}
+                      onClick={() => confirmCompletion(b._id, true)}>Yes, it's done</button>
+                    <button className="btn btn-ghost" style={{ padding: "9px 16px" }}
+                      onClick={() => {
+                        if (window.confirm("Tell the provider the job isn't finished yet?")) {
+                          confirmCompletion(b._id, false);
+                        }
+                      }}>Not yet</button>
+                  </div>
                 </div>
               )}
 
